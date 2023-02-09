@@ -33,13 +33,16 @@ class AttentionSeq2SeqModel(Seq2SeqModel):
             list_decoder.append(decoder_layer)
             decoder_outputs, *decode_state = decoder_layer(decoder_outputs,initial_state=encoder_state)
         
-        attention=Attention()
+        
         if self.args.attention_model=='dot':
+            attention=Attention(score_mode='dot')
             attention_encoder=attention([decoder_outputs,encoder_outputs])
         elif self.args.attention_model=='general':
+            attention=Attention(score_mode='dot')
             W=TimeDistributed(Dense(self.args.latent_dim))
             attention_encoder=attention([decoder_outputs,encoder_outputs,W(encoder_outputs)])
         elif self.args.attention_model=='concat':
+            attention=Attention(score_mode='concat')
             W=TimeDistributed(Dense(self.args.latent_dim))
             attention_encoder=attention([W(decoder_outputs),encoder_outputs,W(encoder_outputs)])
         else:

@@ -88,7 +88,7 @@ class Seq2SeqModel(object):
         with open(os.path.join(self.args.model_save_dir,'history.json'),'r') as f:
             val_loss=[i['val_loss'][0] for i in f.read().splitlines()]
             current_epoch=len(val_loss)
-            val_loss=[1<<16,1<<16,1<<16,1<<16]
+            val_loss=[1<<16,1<<16,1<<16,1<<16]+val_loss
         best_loss=1<<16
         if current_epoch!=0:
             self.model.load_weights(os.path.join(self.args.model_save_dir,'current_model_weight'))
@@ -174,10 +174,10 @@ class Seq2SeqModel(object):
         rouge=ROUGE()
         precision=0
         recall=0
-        f1=0            
+        f1score=0            
         
         with open(os.path.join(self.args.best_model_save_dir,'test predict.txt'),'w') as f:
-            f.write()
+            f.write('')
         for _ in range(0,len(self.x_test),self.args.batch_size):
                 pred=self.predict(self.x_test[_:_+self.args.batch_size])
                 pred=self.id_seq2text_summary(pred)
@@ -188,15 +188,17 @@ class Seq2SeqModel(object):
                         f.write('\n')
                 precision+=sum(score['precision'])
                 recall+=sum(score['recall'])
-                f1+= sum(score['f1'])
-        res={'precision':precision/len(self.x_test),'recall':recall/len(self.x_test),'f1':f1/len(self.x_test)}
+                f1score+= sum(score['f1'])
+        res={'precision':precision/len(self.x_test),'recall':recall/len(self.x_test),'f1':f1score/len(self.x_test)}
         print(f'ROUGE-1:{res}')
         with open(os.path.join(self.args.best_model_save_dir,f'rouge_score_test_{option}.json'),'w') as f:
-                f.write(json.dumps(res))  
+                f.write(json.dumps(res))
+                
 
     def summary(self,text):
         seq=text_to_word_sequence(text)
-        input_seq=pad_sequences([seq],maxlen=self.args.max_summary_len,padding='post')
+        seq=[self.word2index_text[i] for i in seq if i in self.word2index_text else self.word2index_text['<OOV>']]
+        input_seq=pad_sequences([seq,seq],maxlen=self.args.max_text_len,padding='post')
         self.model.load_weights(os.path.join(self.args.best_model_save_dir,'best_model_weight'))
         output=self.predict(input_seq)
         output=self.id_seq2text_summary(output)

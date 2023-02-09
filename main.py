@@ -5,7 +5,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--task', default='train',help='train |validate| test | others')
 parser.add_argument('--model_name',type=str,default='seq2seq',help='seq2seq|biLSTMseq2seq|hybridseq2seq')
-parser.add_argument('--dataset_dir', default='./dataset',help='url dataset')
+parser.add_argument('--dataset_dir', default='./wikihow summarization/dataset',help='url dataset')
 parser.add_argument('--model_save_dir',default='./model/general')
 parser.add_argument('--best_model_save_dir',default='./model/general')
 parser.add_argument('--example',default='./text.txt')
@@ -42,8 +42,8 @@ def main():
         with open(args.example,'r') as f:
             example=f.read()
         summary=model.summary(example)
-        print(f"Text: {example}")
-        print(f"Summary: {summary}")
+        with open(args.example,'a') as f:
+            f.write("Summary:",summary)
     if args.task=='train':
         model.train()
     if args.task=='test':
